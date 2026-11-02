@@ -413,9 +413,8 @@ body.touch .kbonlyrow { display: none !important; }
   <div class="panel card wide">
     <h2 data-t="maps"></h2>
     <div class="label" data-t="lay_l"></div>
-    <div class="seg" id="layList" role="group"><button type="button" data-l="0"><span data-t="lay0"></span></button><button type="button" data-l="1"><span data-t="lay1"></span></button><button type="button" data-l="2"><span data-t="lay2"></span></button><button type="button" data-l="3"><span data-t="lay3"></span></button><button type="button" data-l="4"><span data-t="lay4"></span></button><button type="button" data-l="5"><span data-t="lay5"></span></button><button type="button" data-l="6"><span data-t="lay6"></span></button></div>
+    <div class="seg" id="layList" role="group"><button type="button" data-l="0"><span data-t="lay0"></span></button><button type="button" data-l="1"><span data-t="lay1"></span></button></div>
     <p class="sub small" id="layDesc"></p>
-    <div class="srow"><div class="sl"><b data-t="forks"></b><small data-t="forks_d"></small></div><button type="button" class="sw" id="swForks" role="switch" aria-checked="true"><i></i></button></div>
     <div class="label" data-t="tod_l"></div>
     <div class="todpick" id="todPick" role="group">
       <button type="button" class="tod t0" data-tod="0"><i></i><span data-t="tod0"></span></button>
@@ -773,7 +772,7 @@ const MAPS = [
 let MAP = MAPS[0];
 /* ===== развилки: настоящий съезд-объезд, едет параллельно основной дороге и возвращается (только в свободной езде) ===== */
 const FORK_STEP = 1150, FORK_OFF = 650, FORK_LEN = 800;
-function forkOn() { return !!game.forks && game.mode === 'free' && !MAP.city; }
+function forkOn() { return false; }  /* развилки отключены */
 function forkSideOf(k) { return (k & 1) ? -1 : 1; }
 function forkG(u) { return 26 * sstep(0, 260, u) * (1 - sstep(540, 800, u)); }
 function forkW(u) { return 10.4 * sstep(0, 130, u) * (1 - sstep(690, 800, u)); }
@@ -2214,7 +2213,7 @@ function applyLayoutWorld() {
   updateWorld(car.s);
 }
 function setLayout(l) {
-  if (MAP.city && l > 1) l = 1;
+  l = Math.min(l, 1);
   game.layout = l; saved.layout = l; saveAll(); applyLayoutWorld(); if (typeof raceSetup === 'function') raceSetup(); refreshMenu();
 }
 
@@ -2988,7 +2987,7 @@ function mergeSaved(j) {
   if (Array.isArray(j.cars)) { saved.cars = saved.cars || ['sport']; j.cars.forEach(c => { if (CARS[c] && saved.cars.indexOf(c) < 0) saved.cars.push(c); }); }
   if (typeof j.car === 'string' && CARS[j.car]) saved.car = j.car;
   if (isFinite(+j.dens)) saved.dens = clamp(+j.dens | 0, 0, 100);
-  if (isFinite(+j.layout)) saved.layout = clamp(+j.layout | 0, 0, LAYOUTS.length - 1);
+  if (isFinite(+j.layout)) saved.layout = clamp(+j.layout | 0, 0, 1);
   if (typeof j.forks === 'boolean') saved.forks = j.forks;
   if (typeof j.col === 'string') saved.col = j.col;
   if (isFinite(+j.map)) saved.map = clamp(+j.map | 0, 0, MAPS.length - 1);
@@ -3002,7 +3001,7 @@ function packSaved() {
 function mapUnlocked(i) { return MAPS[i].ads === 0 || !!(saved.unl && saved.unl[MAPS[i].id]); }
 function applySaved() {
   game.mode = saved.mode || 'classic';
-  game.layout = isFinite(+saved.layout) && saved.layout != null ? clamp(+saved.layout | 0, 0, LAYOUTS.length - 1) : 1; game.forks = saved.forks !== false; LY = LAYOUTS[game.layout];
+  game.layout = isFinite(+saved.layout) && saved.layout != null ? clamp(+saved.layout | 0, 0, 1) : 1; game.forks = saved.forks !== false; LY = LAYOUTS[game.layout];
   const mi = mapUnlocked(saved.map | 0) ? (saved.map | 0) : 0;
   setMap(mi, saved.tod);
   if (!saved.cols) saved.cols = ['orange'];
@@ -3334,7 +3333,7 @@ function bindSettings() {
   $('modeBtn').addEventListener('click', () => { initAudio(); openUi('modes', 'start'); });
   $('modesBack').addEventListener('click', closeUi);
   document.querySelectorAll('#layList button').forEach(b => b.addEventListener('click', () => setLayout(+b.getAttribute('data-l'))));
-  $('swForks').addEventListener('click', () => { game.forks = !(game.forks !== false); saved.forks = game.forks; saveAll(); applyLayoutWorld(); refreshMenu(); });
+  if ($('swForks')) $('swForks').addEventListener('click', () => { game.forks = !(game.forks !== false); saved.forks = game.forks; saveAll(); applyLayoutWorld(); refreshMenu(); });
   $('pSetBtn').addEventListener('click', () => openUi('settings', 'pause'));
   $('pMenuBtn').addEventListener('click', toMenu);
   $('pRestartBtn').addEventListener('click', () => { $('pause').hidden = true; startRun(); });
