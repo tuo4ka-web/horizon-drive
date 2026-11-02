@@ -768,6 +768,19 @@ const MAPS = [
   { id: 'city', ads: 3, A: '#8d9096', B: '#767a80', dirt: '#a8a8a4', rock: '#888888', haze: '#c4cdd8', hazeK: 0.25, mount: '#6f7f93', w: [0, 0, 0, 0, 0, 0], bush: [0.5, 0.5, 0.5], rk: [1, 1, 1], snow: 0, sea: 0, fogK: 1.1, city: 1, flat: 1, prev: ['#5f7fa8', '#9aa0a8'] }
 ];
 let MAP = MAPS[0];
+/* ===== развилки: настоящий съезд-объезд, едет параллельно основной дороге и возвращается (только в свободной езде) ===== */
+const FORK_STEP = 1400, FORK_OFF = 700, FORK_LEN = 800;
+function forkOn() { return !!game.forks && game.mode === 'free' && !MAP.city; }
+function forkSideOf(k) { return (k & 1) ? -1 : 1; }
+function forkG(u) { return 26 * sstep(0, 260, u) * (1 - sstep(540, 800, u)); }
+function forkW(u) { return 10.4 * sstep(0, 130, u) * (1 - sstep(690, 800, u)); }
+function forkAt(s, sg) {
+  if (!forkOn()) return -1; const k = Math.floor((s - FORK_OFF) / FORK_STEP); if (k < 0 || forkSideOf(k) !== sg) return -1;
+  const u = s - FORK_OFF - k * FORK_STEP; return u <= FORK_LEN ? u : -1;
+}
+function railLim(s, d) { const u = forkAt(s, d < 0 ? -1 : 1); return u < 0 ? RAIL : Math.max(RAIL, 8.4 + forkG(u) + forkW(u) + 1.5); }
+function inRoad(s, d) { const a = Math.abs(d); if (a <= SHOULDER) return true; const u = forkAt(s, d < 0 ? -1 : 1); if (u < 0) return false; const i = 8.4 + forkG(u); return a >= i - 0.3 && a <= i + forkW(u) + 0.3; }
+function forkClear(s, d) { const sg = d < 0 ? -1 : 1; if (!forkOn()) return false; if (forkAt(s, sg) < 0 && forkAt(s - 16, sg) < 0 && forkAt(s + 16, sg) < 0) return false; return Math.abs(d) < 58; }
 const MAPC = { A: new THREE.Color(), B: new THREE.Color(), dirt: new THREE.Color(), rock: new THREE.Color() };
 const SEA_C = col('#2f8fc0'), SEA_L = col('#7fd0e6'), FOAM_C = col('#f3fbff'), GRASS_B = col('#5f8a3a');
 const _nv = { x: 1, z: 0 };
@@ -775,10 +788,11 @@ function nrm(s) { const dx = xcd(s); const k = 1 / Math.sqrt(1 + dx * dx); _nv.x
 function groundY(s, d) {
   const a = Math.abs(d), y0 = yc(s);
   if (a <= SHOULDER) return y0;
-  if (a <= RAIL + 0.4) return y0 - 0.15;
+  const R = railLim(s, d);
+  if (a <= R + 0.4) return y0 - 0.15;
   if (MAP.flat) return y0 - 0.15 + sstep(90, 330, a) * (terrainH(s, d) - y0) * 0.18;
   if (MAP.sea && d < 0) return y0 - 0.15 - 3.6 * sstep(16, 64, -d);
-  const k = sstep(15, 180, a);
+  const k = sstep(R + 0.7, R + 165.7, a);
   return y0 * (1 - k) + terrainH(s, d) - 0.15 * (1 - k);
 }
 function wp(s, d, out, yoff) {
@@ -1122,9 +1136,9 @@ function updateWorld(carS) {
     // ограждение
     for (let c = 0; c < 2; c++) {
       const hgt = c === 0 ? 0.38 : 0.98;
-      [[RAIL, lR], [-RAIL, lL]].forEach(([d, arr]) => {
+      [[railLim(s, 1), lR], [-railLim(s, -1), lL]].forEach(([d, arr]) => {
         const o = (i * 2 + c) * 3;
-        arr[o] = cx + d * nx; arr[o + 1] = y0 - 0.15 + (forkGap(s, d) ? -2.5 : hgt); arr[o + 2] = -s + d * nz;
+        arr[o] = cx + d * nx; arr[o + 1] = y0 - 0.15 + hgt; arr[o + 2] = -s + d * nz;
       });
     }
     // рельеф
@@ -1148,9 +1162,9 @@ function updateWorld(carS) {
   const pn0 = Math.floor((carS - 70) / POST_STEP);
   for (let j = 0; j < PN - 12; j++) {
     const n = pn0 + j, s = n * POST_STEP, slot = ((n % PN) + PN) % PN;
-    [RAIL, -RAIL].forEach((d, side) => {
+    [railLim(s, 1), -railLim(s, -1)].forEach((d, side) => {
       wp(s, d, _p, 0.33);
-      _o.position.copy(_p); _o.rotation.set(0, -Math.atan(xcd(s)), 0); { const k = forkGap(s, d) ? 0.0001 : 1; _o.scale.set(k, k, k); } _o.updateMatrix();
+      _o.position.copy(_p); _o.rotation.set(0, -Math.atan(xcd(s)), 0); _o.scale.set(1, 1, 1); _o.updateMatrix();
       postMesh.setMatrixAt(slot * 2 + side, _o.matrix);
     });
   }
@@ -1172,6 +1186,7 @@ function updateWorld(carS) {
       let dens = hash(seed + 7) < (MAP.id === 'desert' ? 0.55 : 0.8) ? 1 : 0.0001;
       if (MAP.sea && d < -40) dens = 0.0001;
       let ty = 0; { const W = MAP.w; let tot = 0; for (let k = 0; k < 6; k++) tot += W[k]; let r = hash(seed + 9) * tot; for (let k = 0; k < 6; k++) { if (r < W[k]) { ty = k; break; } r -= W[k]; } }
+      if (forkClear(s, d)) dens = 0.0001;
       if (MAP.city) { ty = 1; dens = (cityDD(s) < 14 || hash(seed + 13) > 0.6) ? 0.0001 : 0.85; }
       _o.position.copy(_p); _o.rotation.set((hash(seed + 10) - 0.5) * 0.06, hash(seed + 5) * 6.28, (hash(seed + 11) - 0.5) * 0.06);
       _o.scale.set(sc * dens, sc * dens * (0.9 + hash(seed + 6) * 0.35), sc * dens); _o.updateMatrix();
@@ -1197,7 +1212,7 @@ function updateWorld(carS) {
       const isRock = hash(seed + 2) < 0.35;
       const d = side * (isRock ? 16 + hash(seed + 4) * 36 : RAIL + 1.5 + hash(seed + 4) * 14);
       wp(s, d, _p, -0.12);
-      const sc = (isRock ? 0.6 : 0.7) + hash(seed + 5) * (isRock ? 1.8 : 1.0), dens = (hash(seed + 6) < 0.75 && !MAP.city) ? 1 : 0.0001;
+      const sc = (isRock ? 0.6 : 0.7) + hash(seed + 5) * (isRock ? 1.8 : 1.0), dens = (hash(seed + 6) < 0.75 && !MAP.city && !forkClear(s, d)) ? 1 : 0.0001;
       _o.position.copy(_p); _o.rotation.set(0, hash(seed + 7) * 6.28, 0); _o.scale.set(sc * dens, sc * dens * (0.8 + hash(seed + 8) * 0.5), sc * dens * (0.8 + hash(seed + 9) * 0.4)); _o.updateMatrix();
       if (MAP.sea && d < -40) _o.scale.set(0.0001, 0.0001, 0.0001), _o.updateMatrix();
       bushMesh.setMatrixAt(slot, isRock ? _zeroM : _o.matrix); rockMesh.setMatrixAt(slot < ROCK_N ? slot : slot - ROCK_N, isRock && slot < ROCK_N ? _o.matrix : _zeroM);
@@ -1220,7 +1235,7 @@ function updateWorld(carS) {
   for (let j = 0; j < LAMP_N - 1; j++) {
     const n = ln0 + j, s = n * LAMP_STEP, g = lamps[((n % LAMP_N) + LAMP_N) % LAMP_N];
     const side = (n & 1) ? 1 : -1;
-    wp(s, side * (RAIL + 1.3), g.position, 0);
+    wp(s, side * (railLim(s, side) + 1.3), g.position, 0);
     g.rotation.y = -Math.atan(xcd(s)) + (side > 0 ? 0 : Math.PI);
     g.visible = true;
   }
@@ -2144,19 +2159,11 @@ updateWorld = function (carS) {
   updateForks(carS);
 };
 
-/* ---------- развилки: боковые съезды с дороги (разрыв в ограждении, знак «Выезд») ---------- */
-const FORK_STEP = 1000, FORK_OFF = 700;
-function forkSide(k) { return (k & 1) ? -1 : 1; }
-function forkGap(s, d) {
-  if (!game.forks || MAP.city || LY === LAYOUTS[0] && false) return false;
-  const k = Math.round((s - FORK_OFF - 14) / FORK_STEP); if (k < 0) return false;
-  const s0 = FORK_OFF + k * FORK_STEP;
-  return Math.sign(d) === forkSide(k) && s >= s0 - 4 && s <= s0 + 32;
-}
+/* ---------- развилки: съезд-объезд (рисуем полотно по тем же формулам, что и физика) ---------- */
 const forkCv = mkCanvas(64, 256);
-(function () { const c = forkCv.getContext('2d'); c.fillStyle = '#3a3c40'; c.fillRect(0, 0, 64, 256); for (let i = 0; i < 700; i++) { c.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '255,255,255' : '0,0,0') + ',0.05)'; c.fillRect(Math.random() * 64, Math.random() * 256, 2, 2); } c.fillStyle = '#e8e8e2'; c.fillRect(3, 0, 3, 256); c.fillRect(58, 0, 3, 256); c.fillStyle = '#e8e2b8'; for (let y = 0; y < 256; y += 64) c.fillRect(31, y, 3, 32); })();
-const forkTex = srgbTex(forkCv, 1, 8);
-const forkMat = new THREE.MeshStandardMaterial({ map: forkTex, color: 0x8c8c8c, side: THREE.DoubleSide, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
+(function () { const c = forkCv.getContext('2d'); c.fillStyle = '#3a3c40'; c.fillRect(0, 0, 64, 256); for (let i = 0; i < 700; i++) { c.fillStyle = 'rgba(' + (Math.random() < 0.5 ? '255,255,255' : '0,0,0') + ',0.05)'; c.fillRect(Math.random() * 64, Math.random() * 256, 2, 2); } c.fillStyle = '#e8e8e2'; c.fillRect(2, 0, 3, 256); c.fillRect(59, 0, 3, 256); c.fillStyle = '#e8e2b8'; for (let y = 0; y < 256; y += 64) c.fillRect(31, y, 3, 32); })();
+const forkTex = srgbTex(forkCv, 1, 1);
+const forkMat = new THREE.MeshStandardMaterial({ map: forkTex, side: THREE.DoubleSide, roughness: 0.85, polygonOffset: true, polygonOffsetFactor: -2, polygonOffsetUnits: -2 });
 const forkPool = [];
 function forkSignTex() { const c = mkCanvas(512, 200), x = c.getContext('2d'); x.fillStyle = '#1e7a46'; x.fillRect(0, 0, 512, 200); x.strokeStyle = '#fff'; x.lineWidth = 8; x.strokeRect(10, 10, 492, 180); x.fillStyle = '#fff'; x.textAlign = 'center'; x.font = '800 70px sans-serif'; x.fillText(t('exit'), 256, 95); x.font = '800 60px sans-serif'; x.fillText('300 ' + t('m'), 256, 165); return srgbTex(c); }
 for (let i = 0; i < 3; i++) {
@@ -2165,34 +2172,26 @@ for (let i = 0; i < 3; i++) {
   const sign = new THREE.Group(); sign.rotation.order = 'YXZ';
   sign.add(bx(0.14, 3.6, 0.14, poleMat, -1.2, 1.8, 0), bx(0.14, 3.6, 0.14, poleMat, 1.2, 1.8, 0));
   const board = new THREE.Mesh(new THREE.PlaneGeometry(3.6, 1.4), new THREE.MeshBasicMaterial({ color: 0xffffff })); board.position.set(0, 3.2, 0.1); sign.add(board);
-  g.userData = { k: -99999, road, sign, board }; scene.add(g, sign); g.userData.signRoot = sign; sign.visible = false; forkPool.push(g);
+  scene.add(g, sign); sign.visible = false; g.userData = { k: -99999, road, signRoot: sign, board }; forkPool.push(g);
 }
 function buildFork(g, k) {
-  const s0 = FORK_OFF + k * FORK_STEP, side = forkSide(k), N = 40, W = 3.7, step = 6;
-  const P0 = new THREE.Vector3(); wp(s0 - 6, side * (SHOULDER - 1.2), P0, 0);
-  const yaw = -Math.atan(xcd(s0)); let cxp = P0.x, czp = P0.z;
-  const pos = new Float32Array((N + 1) * 2 * 3), uv = new Float32Array((N + 1) * 2 * 2), idx = [];
+  const s0 = FORK_OFF + k * FORK_STEP, sg = forkSideOf(k), N = 100, stp = FORK_LEN / N;
+  const pos = new Float32Array((N + 1) * 6), uv = new Float32Array((N + 1) * 4), idx = [], tmp = new THREE.Vector3();
   for (let i = 0; i <= N; i++) {
-    const th = yaw - side * (0.22 + 0.014 * i), dirx = -Math.sin(th), dirz = -Math.cos(th);
-    if (i > 0) { cxp += dirx * step; czp += dirz * step; }
-    const cx0 = cxp, cz0 = czp, px = -dirz, pz = dirx;
-    for (let c = 0; c < 2; c++) {
-      const sg = c ? 1 : -1, x = cx0 + px * W * sg, z = cz0 + pz * W * sg;
-      const ss = -z, dd = (x - xc(ss)) / nrm(ss).x, y = Math.max(groundY(ss, dd), yc(ss) - 0.15 + (i < 3 ? 0.18 : 0)) ;
-      pos[(i * 2 + c) * 3] = x; pos[(i * 2 + c) * 3 + 1] = (i < 4 ? yc(ss) + 0.02 : groundY(ss, dd) + 0.05); pos[(i * 2 + c) * 3 + 2] = z;
-      uv[(i * 2 + c) * 2] = c; uv[(i * 2 + c) * 2 + 1] = i * step / 20;
-    }
+    const u = i * stp, di = sg * (8.4 + forkG(u)), dout = sg * (8.4 + forkG(u) + Math.max(0.01, forkW(u)));
+    [di, dout].forEach((d, c) => { wp(s0 + u, d, tmp, 0.03); pos.set([tmp.x, tmp.y, tmp.z], (i * 2 + c) * 3); uv[(i * 2 + c) * 2] = c; uv[(i * 2 + c) * 2 + 1] = u / 20; });
     if (i < N) { const a = i * 2; idx.push(a, a + 2, a + 1, a + 1, a + 2, a + 3); }
   }
   const geo = g.userData.road.geometry; geo.setAttribute('position', new THREE.BufferAttribute(pos, 3)); geo.setAttribute('uv', new THREE.BufferAttribute(uv, 2)); geo.setIndex(idx); geo.computeVertexNormals();
   for (let i = 0; i < geo.attributes.normal.count; i++) geo.attributes.normal.setXYZ(i, 0, 1, 0);
-  const sg = g.userData.signRoot; wp(s0 - 90, side * (RAIL + 2.6), sg.position, 0); sg.rotation.y = -Math.atan(xcd(s0 - 90)); sg.rotation.x = Math.atan(ycd(s0 - 90));
+  geo.attributes.position.needsUpdate = true; geo.computeBoundingSphere();
+  const sr = g.userData.signRoot, ss = s0 - 90; wp(ss, sg * (RAIL + 2.6), sr.position, 0); sr.rotation.y = -Math.atan(xcd(ss)); sr.rotation.x = Math.atan(ycd(ss));
   if (g.userData.signLang !== LANG) { g.userData.signLang = LANG; const m = g.userData.board.material; if (m.map) m.map.dispose(); m.map = forkSignTex(); m.needsUpdate = true; }
-  sg.visible = true; g.visible = true; g.userData.k = k;
+  sr.visible = true; g.visible = true; g.userData.k = k;
 }
 function updateForks(carS) {
-  if (!game.forks || MAP.city) { forkPool.forEach(g => { g.visible = false; g.userData.signRoot.visible = false; g.userData.k = -99999; }); return; }
-  const k0 = Math.max(0, Math.ceil((carS - 140 - FORK_OFF) / FORK_STEP));
+  if (!forkOn()) { forkPool.forEach(g => { g.visible = false; g.userData.signRoot.visible = false; g.userData.k = -99999; }); return; }
+  const k0 = Math.max(0, Math.floor((carS - 140 - FORK_OFF - FORK_LEN) / FORK_STEP) + 0);
   for (let j = 0; j < 3; j++) { const k = k0 + j, g = forkPool[k % 3]; if (g.userData.k !== k) buildFork(g, k); }
 }
 function applyLayoutWorld() {
@@ -2307,7 +2306,7 @@ function inAct(a) { const b = binds[a]; return keyHas(b[0]) || keyHas(b[1]) || (
 const inUp = () => inAct('gas'), inDn = () => inAct('brake'), inL = () => inAct('left'), inR = () => inAct('right');
 function UP_ENG() { return 1 + 0.06 * (typeof upLvl === 'function' ? upLvl('eng') : 0); }
 function UP_GRIP() { return 1 + 0.035 * (typeof upLvl === 'function' ? upLvl('tire') : 0); }
-function surfaceMu(d) { const a = Math.abs(d); return (a < ROAD_HALF ? 1.45 : a < SHOULDER ? 1.2 : 0.72) * (MAP.wet ? (a < ROAD_HALF ? 0.8 : 0.85) : 1); }
+function surfaceMu(d, s) { const a = Math.abs(d), onR = a < ROAD_HALF || (s != null && a > SHOULDER && inRoad(s, d)); return (onR ? 1.45 : a < SHOULDER ? 1.2 : 0.72) * (MAP.wet ? (onR ? 0.8 : 0.85) : 1); }
 
 function popup(text, cls) {
   const el = document.createElement('div'); el.className = 'pop ' + (cls || ''); el.textContent = text;
@@ -2335,8 +2334,8 @@ function stepCar(dt) {
   const hb = inAct('hb'), nitroKey = inAct('nitro') || (car.nitroLatch && up);
   let u = car.u, w = car.w, om = car.om;
   const spdAbs = Math.abs(u);
-  const mu = surfaceMu(car.d);
-  car.offroad = Math.abs(car.d) > SHOULDER ? 1 : 0;
+  const mu = surfaceMu(car.d, car.s);
+  car.offroad = inRoad(car.s, car.d) ? 0 : 1;
 
   // руль: клавиатурный ввод плавно сглаживается, предел угла зависит от скорости
   const target = (rt ? 1 : 0) - (lt ? 1 : 0);
@@ -2420,7 +2419,7 @@ function stepCar(dt) {
   if (car.psi > Math.PI) car.psi -= Math.PI * 2; else if (car.psi < -Math.PI) car.psi += Math.PI * 2;
 
   // ограждение
-  const lim = RAIL - PHW - 0.1;
+  const lim = railLim(car.s, car.d) - PHW - 0.1;
   if (Math.abs(car.d) > lim) {
     const sg = Math.sign(car.d);
     const hard = Math.hypot(u, w) >= HARD_V;
@@ -2474,7 +2473,7 @@ const I18N = {
     title1: 'Горизонт', rot_hint: '↻ Лучше играть, повернув телефон горизонтально',
     car_sport: 'Спорткар', car_sport_d: 'Быстрый и управляемый. Классика.', car_lada: 'Жигули', car_lada_d: 'Легенда двора: медленнее, но с характером и лёгкими заносами.', car_f1: 'Формула 1', car_f1_d: 'Огромный разгон и прижимная сила, очень острый руль.', car_truck: 'Грузовик', car_truck_d: 'Тяжёлый и мощный, медленно разгоняется и поворачивает.', g_cars: 'Машины', s_drift: 'Чувствительность дрифта', s_drift_d: 'Выше — задняя ось срывается легче, машина охотнее скользит.',
     mode_race: 'Гонка', mode_race_d: 'Доедь до финиша как можно быстрее: шкала пути, знаки по трассе, арка «Финиш» и награда за время. Трафик на дороге.', race_tag: 'ГОНКА', finish: 'ФИНИШ', race_done: 'Финиш!', t_time: 'Время', o_rec: 'Рекорд', to_finish: 'до финиша', m: 'м', map4: 'Осень', map5: 'Город',
-    modes: 'Режимы', modes_sub: 'Выбери, как ехать.', maps_btn: 'Карта', maps_l: 'Карты', lay_l: 'Трасса', tod_l: 'Время суток', lay0: 'Прямая', lay1: 'Классика', lay2: 'Извилистая', lay3: 'Серпантин', lay0_d: 'Почти прямая трасса — легко разгоняться.', lay1_d: 'Плавные повороты и холмы.', lay2_d: 'Много поворотов: придётся тормозить и держать траекторию.', lay3_d: 'Горная дорога: длинные повороты и крутые подъёмы-спуски.', forks: 'Развилки', forks_d: 'Съезды в стороны с указателями.', exit: 'Выезд',
+    modes: 'Режимы', modes_sub: 'Выбери, как ехать.', maps_btn: 'Карта', maps_l: 'Карты', lay_l: 'Трасса', tod_l: 'Время суток', lay0: 'Прямая', lay1: 'Классика', lay2: 'Извилистая', lay3: 'Серпантин', lay0_d: 'Почти прямая трасса — легко разгоняться.', lay1_d: 'Плавные повороты и холмы.', lay2_d: 'Много поворотов: придётся тормозить и держать траекторию.', lay3_d: 'Горная дорога: длинные повороты и крутые подъёмы-спуски.', forks: 'Развилки', forks_d: 'Объезды с развилкой, фонарями и ограждением. Только в свободной езде.', exit: 'Выезд',
     dens: 'Плотность трафика', wrong_way: 'Не туда! Развернись', garage: 'Гараж', mode_classic: 'Классика', mode_free: 'Свободная', mode_time: 'На время', map_l: 'Карта', maps: 'Карты', maps_sub: 'Новые карты открываются за просмотр рекламы.',
     mode_classic_d: 'Плотный трафик, обгоны и встречка. Бейте рекорд и копите деньги.', mode_free_d: 'Свободная езда без аварий. Плотность трафика настраивается от 0 до 100%.', mode_time_d: '75 секунд. Каждый обгон и опасный проезд добавляют время.',
     free_tag: 'Свободная езда', time_tag: 'На время', sec: 'с', time_up: 'Время вышло',
@@ -2520,7 +2519,7 @@ const I18N = {
   en: {
     car_sport: 'Sports car', car_sport_d: 'Fast and agile. The classic.', car_lada: 'Lada', car_lada_d: 'A yard legend: slower, but full of character and easy slides.', car_f1: 'Formula 1', car_f1_d: 'Huge acceleration and downforce, razor-sharp steering.', car_truck: 'Truck', car_truck_d: 'Heavy and powerful, slow to accelerate and turn.', g_cars: 'Cars', s_drift: 'Drift sensitivity', s_drift_d: 'Higher: the rear end breaks away easier and the car slides more.',
     mode_race: 'Race', mode_race_d: 'Reach the finish as fast as you can: route progress bar, signs along the road, a FINISH arch and a time reward. Traffic on the road.', race_tag: 'RACE', finish: 'FINISH', race_done: 'Finish!', t_time: 'Time', o_rec: 'Record', to_finish: 'to finish', m: 'm', map4: 'Autumn', map5: 'City',
-    modes: 'Modes', modes_sub: 'Choose how to drive.', maps_btn: 'Map', maps_l: 'Maps', lay_l: 'Road', tod_l: 'Time of day', lay0: 'Straight', lay1: 'Classic', lay2: 'Winding', lay3: 'Serpentine', lay0_d: 'An almost straight highway — easy to build speed.', lay1_d: 'Gentle curves and hills.', lay2_d: 'Lots of turns: brake and hold your line.', lay3_d: 'A mountain road: long curves and steep climbs.', forks: 'Junctions', forks_d: 'Side exits with road signs.', exit: 'Exit',
+    modes: 'Modes', modes_sub: 'Choose how to drive.', maps_btn: 'Map', maps_l: 'Maps', lay_l: 'Road', tod_l: 'Time of day', lay0: 'Straight', lay1: 'Classic', lay2: 'Winding', lay3: 'Serpentine', lay0_d: 'An almost straight highway — easy to build speed.', lay1_d: 'Gentle curves and hills.', lay2_d: 'Lots of turns: brake and hold your line.', lay3_d: 'A mountain road: long curves and steep climbs.', forks: 'Junctions', forks_d: 'Bypass roads with a junction, lights and rails. Free ride only.', exit: 'Exit',
     dens: 'Traffic density', wrong_way: 'Wrong way! Turn around', garage: 'Garage', mode_classic: 'Classic', mode_free: 'Free ride', mode_time: 'Time attack', map_l: 'Map', maps: 'Maps', maps_sub: 'Unlock new maps by watching ads.',
     mode_classic_d: 'Dense traffic, overtakes and oncoming lanes. Chase records and earn cash.', mode_free_d: 'Relaxed driving with no crash damage. Set traffic density from 0 to 100%.', mode_time_d: '75 seconds. Every overtake and near miss adds time.',
     free_tag: 'Free ride', time_tag: 'Time attack', sec: 's', time_up: 'Time is up',
@@ -3065,7 +3064,7 @@ function payRun() {
 function updateOverCash() { $('overCash').textContent = runEarned > 0 ? '+$' + fmt(runEarned) : ''; }
 
 /* ----- режимы ----- */
-function setMode(m) { game.mode = m; saved.mode = m; packSaved(); saveAll(); refreshMenu(); if (typeof raceSetup === 'function') raceSetup(); }
+function setMode(m) { const wasF = forkOn(); game.mode = m; saved.mode = m; if (wasF !== forkOn() && typeof applyLayoutWorld === 'function') applyLayoutWorld(); packSaved(); saveAll(); refreshMenu(); if (typeof raceSetup === 'function') raceSetup(); }
 function timeBonus(sec) { if (game.mode === 'time') { game.time = Math.min(99, game.time + sec); } }
 function modeTick(dt) {
   if (game.mode === 'race' && state === 'play' && !car.dead && !game.finished) { game.rt += dt; if (car.s >= RACE_FIN) raceFinish(); return; }
