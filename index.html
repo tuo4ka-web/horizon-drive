@@ -286,13 +286,13 @@ body.touch #nitroHint kbd, body.touch #nitroHint .kbonly { display: none; } .kbo
 .modecard:hover { background: rgba(255,255,255,0.13); } .modecard.on { border-color: var(--accent); background: rgba(255,138,61,0.14); }
 .modecard b { font-family: var(--display); font-style: italic; text-transform: uppercase; font-size: 17px; } .modecard small { color: var(--muted); font-size: 12px; line-height: 1.35; }
 #modeList { display: grid; gap: 10px; margin: 6px 0 18px; }
-#layList { margin: 4px 0 6px; } #layList button { flex: 1; padding: 10px 4px; font-size: 13px; }
+#layList { margin: 4px 0 6px; flex-wrap: wrap; } #layList button { min-width: 22%; } #layList button { flex: 1; padding: 10px 4px; font-size: 13px; }
 .todpick { margin: 4px 0 14px; }
 @media (max-width: 720px) { .mbest.top { top: calc(10px + env(safe-area-inset-top, 0px)); padding: 5px 12px; } }
 #paintGrid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 8px; margin: 6px 0 16px; }
 .sw2 { position: relative; aspect-ratio: 1; border-radius: 10px; border: 2px solid rgba(255,255,255,0.2); cursor: pointer; display: grid; place-items: center; padding: 0; color: #fff; font-weight: 800; font-size: 11px; text-shadow: 0 1px 3px rgba(0,0,0,0.8); } .sw2.on { border-color: #fff; box-shadow: 0 0 0 2px var(--accent); } .sw2 em { font-style: normal; background: rgba(0,0,0,0.55); padding: 2px 5px; border-radius: 4px; }
 .up { display: grid; grid-template-columns: 1fr auto; align-items: center; gap: 6px 12px; padding: 8px 0; border-bottom: 1px solid rgba(255,255,255,0.08); } .up b { font-weight: 700; } .up small { grid-column: 1; color: var(--muted); font-size: 12px; } .pips { display: flex; gap: 4px; } .pips i { width: 22px; height: 6px; border-radius: 3px; background: rgba(255,255,255,0.15); } .pips i.f { background: var(--accent); }
-.up .btn { grid-column: 2; grid-row: 1 / span 2; padding: 8px 14px; font-size: 13px; } .btn:disabled { opacity: 0.45; cursor: default; filter: grayscale(0.6); }
+.up .upbtns { grid-column: 2; grid-row: 1 / span 2; display: flex; gap: 6px; } .up .btn { padding: 8px 12px; font-size: 13px; } .mapcard .brow { display: flex; gap: 6px; flex-wrap: wrap; } .swc { display: grid; gap: 4px; align-content: start; min-width: 0; } .swc .sw2 { align-self: start; width: 100%; } .pbuy { border: 0; border-radius: 8px; background: #3ddc6a; color: #052b11; font-weight: 800; font-size: 11px; padding: 4px 0; cursor: pointer; } .pbuy:disabled { opacity: 0.45; filter: grayscale(0.6); cursor: default; } .btn:disabled { opacity: 0.45; cursor: default; filter: grayscale(0.6); }
 .btn.money { background: #3ddc6a; color: #052b11; }
 .ms .rw { color: #6bff8e; font-weight: 800; font-size: 12px; margin-left: 8px; } .ms .st { white-space: nowrap; }
 #overCash { margin: 0 0 12px; font-family: var(--display); font-style: italic; font-weight: 800; font-size: 22px; color: #6bff8e; }
@@ -413,7 +413,7 @@ body.touch .kbonlyrow { display: none !important; }
   <div class="panel card wide">
     <h2 data-t="maps"></h2>
     <div class="label" data-t="lay_l"></div>
-    <div class="seg" id="layList" role="group"><button type="button" data-l="0"><span data-t="lay0"></span></button><button type="button" data-l="1"><span data-t="lay1"></span></button><button type="button" data-l="2"><span data-t="lay2"></span></button><button type="button" data-l="3"><span data-t="lay3"></span></button></div>
+    <div class="seg" id="layList" role="group"><button type="button" data-l="0"><span data-t="lay0"></span></button><button type="button" data-l="1"><span data-t="lay1"></span></button><button type="button" data-l="2"><span data-t="lay2"></span></button><button type="button" data-l="3"><span data-t="lay3"></span></button><button type="button" data-l="4"><span data-t="lay4"></span></button><button type="button" data-l="5"><span data-t="lay5"></span></button><button type="button" data-l="6"><span data-t="lay6"></span></button></div>
     <p class="sub small" id="layDesc"></p>
     <div class="srow"><div class="sl"><b data-t="forks"></b><small data-t="forks_d"></small></div><button type="button" class="sw" id="swForks" role="switch" aria-checked="true"><i></i></button></div>
     <div class="label" data-t="tod_l"></div>
@@ -533,7 +533,10 @@ const LAYOUTS = [
   { A: 28, L1: 900, B: 8, L2: 330, H: 5, hl: 300, H2: 2 },      // прямая трасса
   { A: 130, L1: 380, B: 40, L2: 150, H: 7, hl: 260, H2: 3 },    // классика
   { A: 175, L1: 320, B: 32, L2: 115, H: 9, hl: 240, H2: 4 },    // извилистая
-  { A: 230, L1: 300, B: 40, L2: 120, H: 17, hl: 210, H2: 6 }    // горный серпантин
+  { A: 230, L1: 300, B: 40, L2: 120, H: 17, hl: 210, H2: 6 },   // горный серпантин
+  { A: 245, L1: 340, B: 48, L2: 135, H: 20, hl: 190, H2: 6 },   // перевал
+  { A: 75, L1: 520, B: 24, L2: 260, H: 14, hl: 140, H2: 5 },    // американские горки
+  { A: 310, L1: 430, B: 0, L2: 200, H: 11, hl: 330, H2: 3 }     // скоростные дуги
 ];
 let LY = LAYOUTS[1];
 function xc(s) { s = Math.max(0, s); return sstep(0, 900, s) * (LY.A * Math.sin(s / LY.L1) + LY.B * Math.sin(s / LY.L2)); }
@@ -769,7 +772,7 @@ const MAPS = [
 ];
 let MAP = MAPS[0];
 /* ===== развилки: настоящий съезд-объезд, едет параллельно основной дороге и возвращается (только в свободной езде) ===== */
-const FORK_STEP = 1400, FORK_OFF = 700, FORK_LEN = 800;
+const FORK_STEP = 1150, FORK_OFF = 650, FORK_LEN = 800;
 function forkOn() { return !!game.forks && game.mode === 'free' && !MAP.city; }
 function forkSideOf(k) { return (k & 1) ? -1 : 1; }
 function forkG(u) { return 26 * sstep(0, 260, u) * (1 - sstep(540, 800, u)); }
@@ -1031,7 +1034,7 @@ const mountMeshes = [
   new THREE.Mesh(ridge(1750, 420, 4.1, new THREE.Color(0.6, 0.65, 0.7), new THREE.Color(1, 1, 1)), mountMats[1])
 ];
 mountMeshes.forEach(m => { m.frustumCulled = false; m.renderOrder = -5; scene.add(m); });
-const farGroundMat = new THREE.MeshBasicMaterial({ color: 0x556b3a });
+const farGroundMat = new THREE.MeshBasicMaterial({ color: 0x556b3a, depthTest: false, depthWrite: false });  // всегда позади дороги и рельефа — раньше закрывал дорогу в низинах
 const farGround = new THREE.Mesh(new THREE.CircleGeometry(2200, 32).rotateX(-Math.PI / 2), farGroundMat);
 farGround.frustumCulled = false; farGround.renderOrder = -6; scene.add(farGround);
 const cloudTex = canvasTex(256, 128, (g, w, h) => {
@@ -1113,6 +1116,15 @@ function onPresetApplied() {
   if (typeof refreshChips === 'function') refreshChips();
 }
 
+/* на внутренней стороне поворота полосы земли складываются (радиус < расстояния) — мягко сжимаем смещение, чтобы не было складок/чёрных пятен */
+function gOff(s, d) {
+  const h = 4, x2 = (xc(s + h) - 2 * xc(s) + xc(s - h)) / (h * h), x1 = xcd(s);
+  const kap = x2 / Math.pow(1 + x1 * x1, 1.5);
+  if (kap * d <= 0) return d;
+  const a = Math.abs(d), kk = Math.abs(kap), st = 0.5 / kk, lim = 0.8 / kk;
+  if (a <= st) return d;
+  return Math.sign(d) * (st + (lim - st) * Math.tanh((a - st) / (lim - st)));
+}
 const _o = new THREE.Object3D();
 const _p = new THREE.Vector3();
 let worldBase = -1;
@@ -1145,8 +1157,8 @@ function updateWorld(carS) {
     for (let c = 0; c < 8; c++) {
       [[gRight[c], gR, cR, groundGeoR.attributes.uv.array], [gLeft[c], gL, cL, groundGeoL.attributes.uv.array]].forEach(([d, arr, carr, uarr]) => {
         const o = (i * 8 + c) * 3;
-        const y = groundY(s, d);
-        arr[o] = cx + d * nx; arr[o + 1] = y; arr[o + 2] = -s + d * nz;
+        const y = groundY(s, d), de = gOff(s, d);
+        arr[o] = cx + de * nx; arr[o + 1] = y; arr[o + 2] = -s + de * nz;
         groundColor(s, d, y, y0, _c);
         uarr[i * 16 + c * 2] = d / 7; uarr[i * 16 + c * 2 + 1] = s / 7;
         carr[o] = _c.r; carr[o + 1] = _c.g; carr[o + 2] = _c.b;
@@ -1836,15 +1848,15 @@ function buildF1(colorObj) {
   // «гало»
   const halo = new THREE.Mesh(new THREE.TorusGeometry(0.27, 0.017, 8, 20, Math.PI), carbonM);
   halo.rotation.x = Math.PI / 2; halo.rotation.z = Math.PI; halo.position.set(0, 0.64, 0.02); cabin.add(halo);
-  tilt.add(beam(new THREE.Vector3(0, 0.6, -0.5), new THREE.Vector3(0, 0.85, -0.3), 0.035, carbonM));
-  tilt.add(beam(new THREE.Vector3(0, 0.68, -0.26), new THREE.Vector3(0.0, 0.64, -0.25), 0.03, carbonM));
+  cabin.add(beam(new THREE.Vector3(0, 0.6, -0.5), new THREE.Vector3(0, 0.85, -0.3), 0.035, carbonM));   // стойка гало: только во внешних видах
+  cabin.add(beam(new THREE.Vector3(0, 0.68, -0.26), new THREE.Vector3(0.0, 0.64, -0.25), 0.03, carbonM));
   // пилот
   const helm = new THREE.Mesh(new THREE.SphereGeometry(0.12, 18, 14), yel); helm.position.set(0, 0.7, 0.12);
   const visor = new THREE.Mesh(new THREE.SphereGeometry(0.122, 16, 10, -Math.PI / 2 - 0.9, 1.8, 1.0, 0.7), glassMat); visor.position.copy(helm.position); visor.rotation.y = Math.PI;
   cabin.add(helm, visor, bx(0.3, 0.1, 0.2, carbonM, 0, 0.58, 0.28));
   // руль и приборка (вид из кабины)
   const wheel = steeringWheel(0.1, 0, 0.6, -0.4, -0.9); interior.add(wheel.g); s.wheelNode = wheel.inner;
-  interior.add(bx(0.2, 0.1, 0.08, carbonM, 0, 0.58, -0.6));
+  interior.add(bx(0.16, 0.04, 0.06, carbonM, 0, 0.5, -0.6));
   tilt.add(wheel.g.clone && new THREE.Group());
   // колёса: передние уже, задние шире
   [-1, 1].forEach(sx => {
@@ -2473,12 +2485,12 @@ const I18N = {
     title1: 'Горизонт', rot_hint: '↻ Лучше играть, повернув телефон горизонтально',
     car_sport: 'Спорткар', car_sport_d: 'Быстрый и управляемый. Классика.', car_lada: 'Жигули', car_lada_d: 'Легенда двора: медленнее, но с характером и лёгкими заносами.', car_f1: 'Формула 1', car_f1_d: 'Огромный разгон и прижимная сила, очень острый руль.', car_truck: 'Грузовик', car_truck_d: 'Тяжёлый и мощный, медленно разгоняется и поворачивает.', g_cars: 'Машины', s_drift: 'Чувствительность дрифта', s_drift_d: 'Выше — задняя ось срывается легче, машина охотнее скользит.',
     mode_race: 'Гонка', mode_race_d: 'Доедь до финиша как можно быстрее: шкала пути, знаки по трассе, арка «Финиш» и награда за время. Трафик на дороге.', race_tag: 'ГОНКА', finish: 'ФИНИШ', race_done: 'Финиш!', t_time: 'Время', o_rec: 'Рекорд', to_finish: 'до финиша', m: 'м', map4: 'Осень', map5: 'Город',
-    modes: 'Режимы', modes_sub: 'Выбери, как ехать.', maps_btn: 'Карта', maps_l: 'Карты', lay_l: 'Трасса', tod_l: 'Время суток', lay0: 'Прямая', lay1: 'Классика', lay2: 'Извилистая', lay3: 'Серпантин', lay0_d: 'Почти прямая трасса — легко разгоняться.', lay1_d: 'Плавные повороты и холмы.', lay2_d: 'Много поворотов: придётся тормозить и держать траекторию.', lay3_d: 'Горная дорога: длинные повороты и крутые подъёмы-спуски.', forks: 'Развилки', forks_d: 'Объезды с развилкой, фонарями и ограждением. Только в свободной езде.', exit: 'Выезд',
+    modes: 'Режимы', modes_sub: 'Выбери, как ехать.', maps_btn: 'Карта', maps_l: 'Карты', lay_l: 'Трасса', tod_l: 'Время суток', lay0: 'Прямая', lay1: 'Классика', lay2: 'Извилистая', lay3: 'Серпантин', lay4: 'Перевал', lay5: 'Горки', lay6: 'Дуги', lay4_d: 'Высокий перевал: резкие повороты и большие подъёмы.', lay5_d: 'Американские горки: почти прямо, но дорога ныряет по холмам.', lay6_d: 'Скоростные дуги: огромные плавные виражи на высокой скорости.', lay0_d: 'Почти прямая трасса — легко разгоняться.', lay1_d: 'Плавные повороты и холмы.', lay2_d: 'Много поворотов: придётся тормозить и держать траекторию.', lay3_d: 'Горная дорога: длинные повороты и крутые подъёмы-спуски.', forks: 'Развилки', forks_d: 'Объезды с развилкой, фонарями и ограждением. Только в свободной езде.', exit: 'Выезд',
     dens: 'Плотность трафика', wrong_way: 'Не туда! Развернись', garage: 'Гараж', mode_classic: 'Классика', mode_free: 'Свободная', mode_time: 'На время', map_l: 'Карта', maps: 'Карты', maps_sub: 'Новые карты открываются за просмотр рекламы.',
     mode_classic_d: 'Плотный трафик, обгоны и встречка. Бейте рекорд и копите деньги.', mode_free_d: 'Свободная езда без аварий. Плотность трафика настраивается от 0 до 100%.', mode_time_d: '75 секунд. Каждый обгон и опасный проезд добавляют время.',
     free_tag: 'Свободная езда', time_tag: 'На время', sec: 'с', time_up: 'Время вышло',
     map0: 'Холмы', map1: 'Пустыня', map2: 'Зима', map3: 'Побережье', select: 'Выбрать', selected: 'Выбрана', watch: 'Реклама',
-    g_paint: 'Цвет кузова', g_paint_d: 'Новый цвет — 2 просмотра рекламы. Купленные цвета сохраняются и переключаются бесплатно.', g_up: 'Улучшения', maxed: 'МАКС',
+    g_paint: 'Цвет кузова', g_paint_d: 'Новый цвет — за 2 рекламы или за доллары. Купленные цвета сохраняются.', g_up: 'Улучшения', maxed: 'МАКС',
     up_eng: 'Двигатель', up_eng_d: 'Быстрее разгон.', up_tire: 'Шины', up_tire_d: 'Лучше сцепление и управляемость.', up_nit: 'Нитро', up_nit_d: 'Больше заряда на старте, экономичнее расход.',
     tab_ctrl: 'Управление', tab_snd: 'Звук', tab_game: 'Игра', s_music: 'Музыка', s_vmu: 'Громкость музыки', s_cam: 'Камера по умолчанию', s_cam_d: 'Во время гонки переключается клавишей камеры.', s_tut_b: 'Пройти', s_reset: 'Сбросить клавиши', press_key: 'Нажмите…', loading: 'Загрузка',
     b_gas: 'Газ', b_brake: 'Тормоз / назад', b_left: 'Влево', b_right: 'Вправо', b_hb: 'Ручник (дрифт)', b_nitro: 'Нитро', b_cam: 'Камера',
@@ -2519,12 +2531,12 @@ const I18N = {
   en: {
     car_sport: 'Sports car', car_sport_d: 'Fast and agile. The classic.', car_lada: 'Lada', car_lada_d: 'A yard legend: slower, but full of character and easy slides.', car_f1: 'Formula 1', car_f1_d: 'Huge acceleration and downforce, razor-sharp steering.', car_truck: 'Truck', car_truck_d: 'Heavy and powerful, slow to accelerate and turn.', g_cars: 'Cars', s_drift: 'Drift sensitivity', s_drift_d: 'Higher: the rear end breaks away easier and the car slides more.',
     mode_race: 'Race', mode_race_d: 'Reach the finish as fast as you can: route progress bar, signs along the road, a FINISH arch and a time reward. Traffic on the road.', race_tag: 'RACE', finish: 'FINISH', race_done: 'Finish!', t_time: 'Time', o_rec: 'Record', to_finish: 'to finish', m: 'm', map4: 'Autumn', map5: 'City',
-    modes: 'Modes', modes_sub: 'Choose how to drive.', maps_btn: 'Map', maps_l: 'Maps', lay_l: 'Road', tod_l: 'Time of day', lay0: 'Straight', lay1: 'Classic', lay2: 'Winding', lay3: 'Serpentine', lay0_d: 'An almost straight highway — easy to build speed.', lay1_d: 'Gentle curves and hills.', lay2_d: 'Lots of turns: brake and hold your line.', lay3_d: 'A mountain road: long curves and steep climbs.', forks: 'Junctions', forks_d: 'Bypass roads with a junction, lights and rails. Free ride only.', exit: 'Exit',
+    modes: 'Modes', modes_sub: 'Choose how to drive.', maps_btn: 'Map', maps_l: 'Maps', lay_l: 'Road', tod_l: 'Time of day', lay0: 'Straight', lay1: 'Classic', lay2: 'Winding', lay3: 'Serpentine', lay4: 'Pass', lay5: 'Rollers', lay6: 'Sweepers', lay4_d: 'A high mountain pass: sharp turns and big climbs.', lay5_d: 'Rollercoaster: nearly straight, but the road dives over hills.', lay6_d: 'Fast sweepers: huge smooth bends at high speed.', lay0_d: 'An almost straight highway — easy to build speed.', lay1_d: 'Gentle curves and hills.', lay2_d: 'Lots of turns: brake and hold your line.', lay3_d: 'A mountain road: long curves and steep climbs.', forks: 'Junctions', forks_d: 'Bypass roads with a junction, lights and rails. Free ride only.', exit: 'Exit',
     dens: 'Traffic density', wrong_way: 'Wrong way! Turn around', garage: 'Garage', mode_classic: 'Classic', mode_free: 'Free ride', mode_time: 'Time attack', map_l: 'Map', maps: 'Maps', maps_sub: 'Unlock new maps by watching ads.',
     mode_classic_d: 'Dense traffic, overtakes and oncoming lanes. Chase records and earn cash.', mode_free_d: 'Relaxed driving with no crash damage. Set traffic density from 0 to 100%.', mode_time_d: '75 seconds. Every overtake and near miss adds time.',
     free_tag: 'Free ride', time_tag: 'Time attack', sec: 's', time_up: 'Time is up',
     map0: 'Hills', map1: 'Desert', map2: 'Winter', map3: 'Coast', select: 'Select', selected: 'Selected', watch: 'Ad',
-    g_paint: 'Paint', g_paint_d: 'A new color costs 2 ads. Owned colors are saved and switch for free.', g_up: 'Upgrades', maxed: 'MAX',
+    g_paint: 'Paint', g_paint_d: 'A new color costs 2 ads or dollars. Owned colors are saved.', g_up: 'Upgrades', maxed: 'MAX',
     up_eng: 'Engine', up_eng_d: 'Faster acceleration.', up_tire: 'Tires', up_tire_d: 'More grip and better handling.', up_nit: 'Nitro', up_nit_d: 'More charge at start, lower consumption.',
     tab_ctrl: 'Controls', tab_snd: 'Sound', tab_game: 'Game', s_music: 'Music', s_vmu: 'Music volume', s_cam: 'Default camera', s_cam_d: 'In a race, the camera key still cycles views.', s_tut_b: 'Play', s_reset: 'Reset keys', press_key: 'Press a key…', loading: 'Loading',
     b_gas: 'Throttle', b_brake: 'Brake / reverse', b_left: 'Steer left', b_right: 'Steer right', b_hb: 'Handbrake (drift)', b_nitro: 'Nitro', b_cam: 'Camera',
@@ -2943,7 +2955,8 @@ const PAINTS = [
   { id: 'yellow', hex: '#f2c218', n: 'Жёлтый', e: 'Yellow' }, { id: 'green', hex: '#1f9d55', n: 'Зелёный', e: 'Green' }, { id: 'white', hex: '#e9edf2', n: 'Белый', e: 'White' },
   { id: 'black', hex: '#1a1b20', n: 'Чёрный', e: 'Black' }, { id: 'purple', hex: '#7a3fd1', n: 'Фиолетовый', e: 'Purple' }, { id: 'cyan', hex: '#18b6c9', n: 'Бирюзовый', e: 'Cyan' }, { id: 'pink', hex: '#ec5fa6', n: 'Розовый', e: 'Pink' }
 ];
-const PAINT_ADS = 2, MISS_PAY = [100, 250, 600];
+const PAINT_ADS = 2, PAINT_PRICE = 1200, UP_ADS = [1, 2, 2, 3], MISS_PAY = [100, 250, 600];
+function mapPrice(m) { return m.ads * 1500; }
 const UPS = [
   { id: 'eng', k: 'up_eng', cost: [400, 900, 1700, 3000] }, { id: 'tire', k: 'up_tire', cost: [350, 800, 1500, 2600] }, { id: 'nit', k: 'up_nit', cost: [300, 700, 1300, 2300] }
 ];
@@ -2968,13 +2981,14 @@ function mergeSaved(j) {
   if (+j.bestT > (saved.bestT || 0)) saved.bestT = +j.bestT;
   if (j.unl && typeof j.unl === 'object') { saved.unl = saved.unl || {}; for (const k in j.unl) if (j.unl[k]) saved.unl[k] = true; }
   if (j.adp && typeof j.adp === 'object') { saved.adp = saved.adp || {}; for (const k in j.adp) saved.adp[k] = Math.max(+saved.adp[k] || 0, +j.adp[k] || 0); }
+  if (j.uadp && typeof j.uadp === 'object') { saved.uadp = saved.uadp || {}; for (const k in j.uadp) saved.uadp[k] = Math.max(+saved.uadp[k] || 0, +j.uadp[k] || 0); }
   if (Array.isArray(j.cols)) { saved.cols = saved.cols || ['orange']; j.cols.forEach(c => { if (PAINTS.some(p => p.id === c) && saved.cols.indexOf(c) < 0) saved.cols.push(c); }); }
   if (j.cadp && typeof j.cadp === 'object') { saved.cadp = saved.cadp || {}; for (const k in j.cadp) saved.cadp[k] = Math.max(+saved.cadp[k] || 0, +j.cadp[k] || 0); }
   if (j.up && typeof j.up === 'object') { saved.up = saved.up || {}; UPS.forEach(u => { saved.up[u.id] = clamp(Math.max(+saved.up[u.id] || 0, +j.up[u.id] || 0), 0, 4); }); }
   if (Array.isArray(j.cars)) { saved.cars = saved.cars || ['sport']; j.cars.forEach(c => { if (CARS[c] && saved.cars.indexOf(c) < 0) saved.cars.push(c); }); }
   if (typeof j.car === 'string' && CARS[j.car]) saved.car = j.car;
   if (isFinite(+j.dens)) saved.dens = clamp(+j.dens | 0, 0, 100);
-  if (isFinite(+j.layout)) saved.layout = clamp(+j.layout | 0, 0, 3);
+  if (isFinite(+j.layout)) saved.layout = clamp(+j.layout | 0, 0, LAYOUTS.length - 1);
   if (typeof j.forks === 'boolean') saved.forks = j.forks;
   if (typeof j.col === 'string') saved.col = j.col;
   if (isFinite(+j.map)) saved.map = clamp(+j.map | 0, 0, MAPS.length - 1);
@@ -2988,7 +3002,7 @@ function packSaved() {
 function mapUnlocked(i) { return MAPS[i].ads === 0 || !!(saved.unl && saved.unl[MAPS[i].id]); }
 function applySaved() {
   game.mode = saved.mode || 'classic';
-  game.layout = isFinite(+saved.layout) && saved.layout != null ? clamp(+saved.layout | 0, 0, 3) : 1; game.forks = saved.forks !== false; LY = LAYOUTS[game.layout];
+  game.layout = isFinite(+saved.layout) && saved.layout != null ? clamp(+saved.layout | 0, 0, LAYOUTS.length - 1) : 1; game.forks = saved.forks !== false; LY = LAYOUTS[game.layout];
   const mi = mapUnlocked(saved.map | 0) ? (saved.map | 0) : 0;
   setMap(mi, saved.tod);
   if (!saved.cols) saved.cols = ['orange'];
@@ -3132,13 +3146,17 @@ function renderMaps() {
     const pv = document.createElement('div'); pv.className = 'pv'; pv.style.background = (typeof PREV !== 'undefined' && PREV.maps[i]) ? 'url(' + PREV.maps[i] + ') center/cover' : 'linear-gradient(180deg,' + m.prev[0] + ',' + m.prev[1] + ')';
     const mi = document.createElement('div'); mi.className = 'mi';
     const nm = document.createElement('b'); nm.textContent = mapName(i);
+    const brow = document.createElement('div'); brow.className = 'brow';
     const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn';
     if (mapUnlocked(i)) { bt.textContent = i === game.map ? t('selected') : t('select'); bt.disabled = i === game.map; bt.onclick = () => { selectMap(i); }; }
     else {
       const have = (saved.adp && saved.adp[m.id]) || 0; bt.className = 'btn alt'; bt.textContent = '▶ ' + t('watch') + ' ' + have + '/' + m.ads;
+      const pr = mapPrice(m), mb = document.createElement('button'); mb.type = 'button'; mb.className = 'btn money'; mb.textContent = '$' + fmt(pr); mb.disabled = (saved.cash || 0) < pr;
+      mb.onclick = () => { if ((saved.cash || 0) < pr) return; addCash(-pr); saved.unl = saved.unl || {}; saved.unl[m.id] = true; if (sfx.coin) sfx.coin(); selectMap(i); saveAll(); renderMaps(); };
+      brow.appendChild(mb);
       bt.onclick = () => { initAudio(); showRewarded(() => { saved.adp = saved.adp || {}; saved.adp[m.id] = (saved.adp[m.id] || 0) + 1; if (saved.adp[m.id] >= m.ads) { saved.unl = saved.unl || {}; saved.unl[m.id] = true; if (sfx.coin) sfx.coin(); selectMap(i); } saveAll(); renderMaps(); }); };
     }
-    mi.append(nm, bt); card.append(pv, mi); g.appendChild(card);
+    brow.insertBefore(bt, brow.firstChild); mi.append(nm, brow); card.append(pv, mi); g.appendChild(card);
   });
 }
 const MODE_IDS = ['classic', 'free', 'time', 'race'];
@@ -3189,7 +3207,7 @@ function renderGarage() {
   const pg = $('paintGrid'); pg.textContent = '';
   saved.cols = saved.cols || ['orange'];
   PAINTS.forEach(p => {
-    const owned = saved.cols.indexOf(p.id) >= 0, b = document.createElement('button'); b.type = 'button'; b.className = 'sw2' + (saved.col === p.id || (!saved.col && p.id === 'orange') ? ' on' : '');
+    const owned = saved.cols.indexOf(p.id) >= 0, cell = document.createElement('div'), b = document.createElement('button'); cell.className = 'swc'; b.type = 'button'; b.className = 'sw2' + (saved.col === p.id || (!saved.col && p.id === 'orange') ? ' on' : '');
     b.style.background = p.hex; b.title = paintName(p);
     if (!owned) { const e = document.createElement('em'); e.textContent = '▶ ' + ((saved.cadp && saved.cadp[p.id]) || 0) + '/' + PAINT_ADS; b.appendChild(e); }
     b.onclick = () => {
@@ -3200,7 +3218,10 @@ function renderGarage() {
         saveAll(); renderGarage();
       });
     };
-    pg.appendChild(b);
+    cell.appendChild(b);
+    if (!owned) { const pb = document.createElement('button'); pb.type = 'button'; pb.className = 'pbuy'; pb.textContent = '$' + fmt(PAINT_PRICE); pb.disabled = (saved.cash || 0) < PAINT_PRICE;
+      pb.onclick = () => { if ((saved.cash || 0) < PAINT_PRICE) return; addCash(-PAINT_PRICE); saved.cols.push(p.id); saved.col = p.id; rebuildPlayer(p.hex); if (sfx.coin) sfx.coin(); saveAll(); renderGarage(); }; cell.appendChild(pb); }
+    pg.appendChild(cell);
   });
   const ul = $('upList'); ul.textContent = '';
   UPS.forEach(u => {
@@ -3210,9 +3231,16 @@ function renderGarage() {
     const d = document.createElement('small'); d.textContent = t(u.k + '_d');
     const bt = document.createElement('button'); bt.type = 'button'; bt.className = 'btn money';
     if (lv >= 4) { bt.textContent = t('maxed'); bt.disabled = true; }
-    else { const c = u.cost[lv]; bt.textContent = '$' + fmt(c); bt.disabled = (saved.cash || 0) < c; bt.onclick = () => { if ((saved.cash || 0) < c) return; addCash(-c); saved.up = saved.up || {}; saved.up[u.id] = lv + 1; if (sfx.coin) sfx.coin(); saveAll(); renderGarage(); }; }
+    const btns = document.createElement('div'); btns.className = 'upbtns';
+    if (lv >= 4) { btns.appendChild(bt); }
+    else {
+      const c = u.cost[lv]; bt.textContent = '$' + fmt(c); bt.disabled = (saved.cash || 0) < c; bt.onclick = () => { if ((saved.cash || 0) < c) return; addCash(-c); saved.up = saved.up || {}; saved.up[u.id] = lv + 1; if (saved.uadp) saved.uadp[u.id] = 0; if (sfx.coin) sfx.coin(); saveAll(); renderGarage(); };
+      const need = UP_ADS[lv], have = (saved.uadp && saved.uadp[u.id]) || 0, ab = document.createElement('button'); ab.type = 'button'; ab.className = 'btn alt'; ab.textContent = '▶ ' + have + '/' + need;
+      ab.onclick = () => { initAudio(); showRewarded(() => { saved.uadp = saved.uadp || {}; saved.uadp[u.id] = (saved.uadp[u.id] || 0) + 1; if (saved.uadp[u.id] >= UP_ADS[upLvl(u.id)]) { saved.up = saved.up || {}; saved.up[u.id] = upLvl(u.id) + 1; saved.uadp[u.id] = 0; if (sfx.coin) sfx.coin(); } saveAll(); renderGarage(); }); };
+      btns.append(bt, ab);
+    }
     const left = document.createElement('div'); left.append(nm, pips);
-    row.append(left, bt, d); ul.appendChild(row);
+    row.append(left, btns, d); ul.appendChild(row);
   });
 }
 
