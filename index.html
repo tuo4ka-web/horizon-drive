@@ -3485,12 +3485,12 @@ function raceSetup() {
   const on = game.mode === 'race';
   if (on && raceLang !== LANG) raceBuild();
   raceObjs.visible = on;
-  const r = $('route'); if (r) r.hidden = !on || state === 'menu';
+  const r = $('route'); if (r) r.hidden = !on || !(state === 'play' || state === 'pause' || state === 'ad');
 }
 let routeC = {};
 function raceHud() {
   const r = $('route'); if (!r) return;
-  const show = game.mode === 'race' && state !== 'menu'; if (r.hidden === show) r.hidden = !show;
+  const show = game.mode === 'race' && (state === 'play' || state === 'pause' || state === 'ad'); if (r.hidden === show) r.hidden = !show;
   if (!show) return;
   const f = clamp((car.s - RACE_S0) / RACE_LEN, 0, 1), p = Math.round(f * 1000);
   if (p !== routeC.p) { routeC.p = p; $('routeFill').style.width = (f * 100).toFixed(1) + '%'; $('routeCar').style.left = (f * 100).toFixed(1) + '%'; $('routePct').textContent = Math.round(f * 100) + '%'; }
@@ -3712,6 +3712,7 @@ function onDouble() {
 }
 
 /* ============ Камера ============ */
+const orb = { a: 0.55, h: 0, hs: 0, z: 1, zs: 1, drag: false, t: 0, x: 0, y: 0 };
 let camInit = false, camYawV = 0, fovCur = 62, lastT = 0, simClock = 0;
 const _cq = new THREE.Quaternion(), _cq2 = new THREE.Quaternion(), _ce = new THREE.Euler();
 const camPos = new THREE.Vector3(), camLk = new THREE.Vector3(), _cp = new THREE.Vector3(), _hv = new THREE.Vector3();
@@ -3721,8 +3722,10 @@ function updateCamera(dt) {
   wp(car.s, car.d, _cp, 0);
   const yaw = carYawWorld(), sp = Math.abs(car.u);
   if (state === 'menu') {
-    const ang = 0.55 + simClock * 0.2;
-    { const K = CUR.camK; camera.position.set(_cp.x + Math.sin(ang) * 8.6 * K, _cp.y + 2.1 * (1 + (K - 1) * 0.8), _cp.z - Math.cos(ang) * 8.6 * K); }
+    if (!orb.drag && performance.now() - orb.t > 2500) orb.a += 0.2 * dt;   // сама крутится, пока не трогаешь
+    orb.hs += (orb.h - orb.hs) * Math.min(1, dt * 8); orb.zs += (orb.z - orb.zs) * Math.min(1, dt * 8);
+    const ang = orb.a;
+    { const K = CUR.camK * orb.zs; camera.position.set(_cp.x + Math.sin(ang) * 8.6 * K, _cp.y + (2.1 + orb.hs) * (1 + (CUR.camK - 1) * 0.8), _cp.z - Math.cos(ang) * 8.6 * K); }
     camera.lookAt(_cp.x, _cp.y + 0.8 * CUR.camK, _cp.z);
     if (Math.abs(camera.fov - 48) > 0.1 || camera.near < 0.2) { camera.fov = 48; camera.near = 0.25; camera.updateProjectionMatrix(); }
     camInit = false; return;
@@ -4003,6 +4006,21 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { in
   requestAnimationFrame(() => requestAnimationFrame(() => {
     try { ysdk && ysdk.features && ysdk.features.LoadingAPI && ysdk.features.LoadingAPI.ready(); } catch (e) { }
   }));
+})();
+
+/* ----- осмотр машины в меню/гараже: тяни пальцем или мышью, колёсико — приближение ----- */
+(function () {
+  const skip = 'button,input,select,label,a,.card,.modecard,.mapcard,.carcard,.up,.srow,.mbest,.logo,.seg,.swc,.sw2,#paintGrid,#upList,#carGrid,#mapGrid,#bindList,#modeList,#layList,#todPick';
+  const ok = e => state === 'menu' && !(e.target.closest && e.target.closest(skip));
+  window.addEventListener('pointerdown', e => { if (!ok(e)) return; orb.drag = true; orb.x = e.clientX; orb.y = e.clientY; orb.t = performance.now(); }, { passive: true });
+  window.addEventListener('pointermove', e => {
+    if (!orb.drag) return;
+    orb.a -= (e.clientX - orb.x) * 0.009; orb.h = clamp(orb.h + (e.clientY - orb.y) * 0.012, -1.0, 4.5);
+    orb.x = e.clientX; orb.y = e.clientY; orb.t = performance.now();
+  }, { passive: true });
+  const up = () => { if (orb.drag) { orb.drag = false; orb.t = performance.now(); } };
+  window.addEventListener('pointerup', up, { passive: true }); window.addEventListener('pointercancel', up, { passive: true });
+  window.addEventListener('wheel', e => { if (state !== 'menu' || (e.target.closest && e.target.closest('.card,#upList,#mapGrid,#carGrid'))) return; orb.z = clamp(orb.z + Math.sign(e.deltaY) * 0.08, 0.55, 1.7); orb.t = performance.now(); }, { passive: true });
 })();
 
 </script>
