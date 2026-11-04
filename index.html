@@ -2332,7 +2332,7 @@ function bumpCombo(n) {
   const c = $('combo'); c.classList.add('pop'); setTimeout(() => c.classList.remove('pop'), 130);
 }
 
-const OFFROAD_V = 35 / 3.6;
+const OFFROAD_V = 90 / 3.6;
 function stepCar(dt) {
   if (car.dead) {
     car.u = damp(car.u, 0, 1.6, dt); car.w = damp(car.w, 0, 2.5, dt); car.om = damp(car.om, 0, 2.0, dt);
@@ -2418,7 +2418,7 @@ function stepCar(dt) {
   if (car.stab > 0) { car.stab -= dt; dom += -car.psi * 7 - om * 5; w *= (1 - 3 * dt); }
   u += du * dt; w += dw * dt; om += dom * dt;
   if (u < -REV_V) u = -REV_V;
-  if (car.offroad && u > OFFROAD_V) u = Math.max(OFFROAD_V, u - 45 * dt);   // за пределами дороги — не быстрее 35 км/ч
+  if (car.offroad && u > OFFROAD_V) u = Math.max(OFFROAD_V, u - 45 * dt);   // за пределами дороги — не быстрее 90 км/ч
   if (u < 0) car.revDist += -u * dt; else if (u > 2) { car.revDist = 0; car.revWarn = 0; }
   if (Math.abs(u) < 0.05 && !up && !dn) u = 0;
   car.ax = damp(car.ax, axCmd, 8, dt); car.ay = damp(car.ay, ay, 8, dt);
@@ -2509,10 +2509,10 @@ const I18N = {
     m_spd: 'Скорость', m_dst: 'Дистанция', m_pas: 'Обгоны', m_nea: 'Опасные проезды', m_cmb: 'Комбо', m_scr: 'Очки за заезд',
     u_kmh: 'км/ч', u_km: 'км',
     tu1: 'Газ', tu1d: 'Удерживай, чтобы разогнаться до 60 км/ч.', tu2: 'Руль', tu2d: 'Поверни влево и вправо — перестраивайся между полосами.',
-    tu3: 'Тормоз', tu3d: 'Разгонись и притормози. Задним ходом можно только развернуться.', tu4: 'Ручник — дрифт', tu4d: 'На скорости нажми Пробел вместе с рулём — машина пойдёт в занос.',
+    tu3: 'Тормоз', tu3d: 'Разгонись и притормози. Задним ходом можно только развернуться.', tu4: 'Учимся дрифтить', tu4d: 'Разгонись выше 60 км/ч, поверни руль и зажми Пробел (ручник) — зад машины сорвётся в занос. Держи руль в сторону поворота, отпусти Пробел и выровняй машину. Чем сильнее занос, тем больше очков.',
     tu5: 'Нитро', tu5d: 'Держи клавишу нитро вместе с газом или нажми газ дважды! Нитро копится за обгоны и дрифт.', tu6: 'Камера', tu6d: 'Переключай вид: сзади, далеко, из кабины.',
     tu_end: 'Готово!', tu_endd: 'Обгоняй попутные машины, рискуй на встречке — это даёт очки и нитро. Удачи!',
-    tu1t: 'Держи кнопку газа', tu3t: 'Нажми кнопку тормоза', tu4t: 'Нажми кнопку дрифта', tu5t: 'Зажми кнопку НИТРО',
+    tu1t: 'Держи кнопку газа', tu3t: 'Нажми кнопку тормоза', tu4t: 'Разгонись, рули и держи кнопку дрифта', tu5t: 'Зажми кнопку НИТРО',
     o_miss: 'Новая звезда', title2: 'Драйв',
     sub: 'Четырёхполосное шоссе. Обгоняйте попутный поток, ныряйте во встречную полосу, ловите дрифт и копите нитро. Каждое касание бьёт по кузову.',
     k_gas: 'газ', k_brake: 'тормоз, задний ход', k_steer: 'руль', k_hb: 'ручник, дрифт', k_nitro: 'нитро', k_cam: 'камера', k_tod: 'время суток', k_pause: 'пауза, заново',
@@ -2555,10 +2555,10 @@ const I18N = {
     m_spd: 'Top speed', m_dst: 'Distance', m_pas: 'Overtakes', m_nea: 'Near misses', m_cmb: 'Combo', m_scr: 'Run score',
     u_kmh: 'km/h', u_km: 'km',
     tu1: 'Throttle', tu1d: 'Hold it to accelerate to 60 km/h.', tu2: 'Steering', tu2d: 'Steer left and right to change lanes.',
-    tu3: 'Brake', tu3d: 'Speed up, then brake. Reverse is only for turning around.', tu4: 'Handbrake drift', tu4d: 'At speed, press Space while steering to slide the car.',
+    tu3: 'Brake', tu3d: 'Speed up, then brake. Reverse is only for turning around.', tu4: 'Learn to drift', tu4d: 'Get above 60 km/h, steer and hold Space (handbrake) — the rear breaks loose into a slide. Keep steering into the turn, release Space and straighten up. A bigger slide scores more.',
     tu5: 'Nitro', tu5d: 'Hold the nitro key while accelerating, or double-tap throttle! Nitro charges from overtakes and drifts.', tu6: 'Camera', tu6d: 'Switch view: chase, far, cockpit.',
     tu_end: 'Done!', tu_endd: 'Overtake traffic and risk the oncoming lanes for points and nitro. Good luck!',
-    tu1t: 'Hold the throttle', tu3t: 'Tap the brake button', tu4t: 'Tap the drift button', tu5t: 'Hold the NITRO button',
+    tu1t: 'Hold the throttle', tu3t: 'Tap the brake button', tu4t: 'Speed up, steer and hold the drift button', tu5t: 'Hold the NITRO button',
     o_miss: 'New star',
     title1: 'Horizon', rot_hint: '↻ Best played in landscape', title2: 'Drive',
     sub: 'A four-lane highway. Overtake traffic, dive into the oncoming lane, drift and build up nitro. Every hit damages your body.',
@@ -3357,7 +3357,7 @@ const TUT = [
   { k: 'gas', n: 'tu1', init() { }, step(dt) { return clamp(Math.abs(car.u) * KMH / 60, 0, 1); } },
   { k: 'steer', n: 'tu2', init() { tut.L = tut.R = 0; }, step(dt) { if (inL()) tut.L = Math.min(0.5, tut.L + dt); if (inR()) tut.R = Math.min(0.5, tut.R + dt); return (tut.L + tut.R) / 1; } },
   { k: 'brake', n: 'tu3', init() { tut.t = 0; }, step(dt) { if (inDn() && car.u > 5) tut.t += dt; return clamp(tut.t / 0.8, 0, 1); } },
-  { k: 'hb', n: 'tu4', init() { tut.t = 0; }, step(dt) { if (inAct('hb') && car.u > 10) tut.t += dt; return clamp(tut.t / 0.6, 0, 1); } },
+  { k: 'hb', n: 'tu4', init() { tut.t = 0; }, step(dt) { if (inAct('hb') && car.u > 14 && (inL() || inR())) tut.t += dt * (Math.abs(car.w) > 1.8 ? 1 : 0.15); return clamp(tut.t / 1.2, 0, 1); } },
   { k: 'nitro', n: 'tu5', init() { tut.t = 0; car.nitro = 100; }, step(dt) { if (car.nitroOn) tut.t += dt; if (!car.nitroOn && car.nitro < 40) car.nitro = 100; return clamp(tut.t / 1.4, 0, 1); } },
   { k: 'cam', n: 'tu6', init() { tut.cam0 = camMode; }, step(dt) { return camMode !== tut.cam0 ? 1 : 0; } }
 ];
